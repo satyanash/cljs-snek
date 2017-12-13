@@ -1,0 +1,2 @@
+{:require [modern-cljs.snek]
+ :compiler-options {:asset-path "js/main.out"}}

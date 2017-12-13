@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<title>SNEK EAT FRUT</title>
+		<style>
+body{
+	background-color:LightGray;
+	text-align:center;
+}
+button{
+	padding: 10px;
+	font-size: 120%;
+}
+#logTable{
+	width: 50%;
+	margin-left:auto;
+	margin-right:auto;
+	border-collapse: collapse;
+	border: solid black 1px;
+}
+
+#logTable tr:nth-child(2){
+	font-weight: bold;
+}
+		</style>
+	</head>
+	<body>
+		<h2>SNEK EAT FRUT</h2>
+		<p>
+			<button type="button" id="newGameButton">NEW GAME</button>
+			<button type="button" id="pauseToggle">PAUSE</button>
+		</p>
+		<p>Use: <b>←↓↑→</b>, <b>WASD</b> or <b>HJKL</b> to turn, <b>p</b> to pause</p>
+		<canvas id="canvas"></canvas>
+		<table id="logTable">
+			<tbody>
+				<tr>
+					<td>State</td>
+					<td>Score</td>
+					<td>Length</td>
+					<td>Snek</td>
+					<td>Frut</td>
+					<td>Tick</td>
+				</tr>
+				<tr>
+					<td id="state"></td>
+					<td id="score"></td>
+					<td id="length"></td>
+					<td id="snake"></td>
+					<td id="fruit"></td>
+					<td id="tick"></td>
+				</tr>
+			</tbody>
+		</table>
+		<script src="js/main.js"></script>
+		<script>
+			console.log("modern_cljs", modern_cljs); 
+			console.log("modern_cljs.snek", modern_cljs.snek); 
+			modern_cljs.snek.init();
+		</script>
+	</body>
+</html>
