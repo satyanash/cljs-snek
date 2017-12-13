@@ -221,6 +221,7 @@
       :fruit {
         :pos (randomPoint defaultWidth  defaultHeight)
       }
+      :nextDir initialDirection
     }
   )
 )
@@ -297,14 +298,18 @@
           (-> e .target (set-style! :border-style "inset"))
           (-> e .target (set-style! :border-style "outset"))))
 
-(defn handleKeyDown [state e newGameFunction]
+(defn getAction [state e newGameFunction]
   (case (.-keyCode e)
-    (37 72 65) (set! (:nextDir state) LEFT)  ; (Left h a) keys
-    (38 75 87) (set! (:nextDir state) UP)    ; (Up k w) keys
-    (39 76 68) (set! (:nextDir state) RIGHT) ; (Right l d) keys
-    (40 74 83) (set! (:nextDir state) DOWN)  ; (Down j s) keys
-    80 (togglePause state) ; p key
-    82 (newGameFunction state))) ; r key
+    (37 72 65) LEFT  ; (Left h a) keys
+    (38 75 87) UP    ; (Up k w) keys
+    (39 76 68) RIGHT ; (Right l d) keys
+    (40 74 83) DOWN  ; (Down j s) keys
+    80 :pause ; p key
+    82 :restart )) ; r key
+
+(defn changeDir! [state nextDir]
+  (swap! state #(assoc %1 :nextDir nextDir))
+)
 
 (defn startNewGame [state] 
         (if @state (do
@@ -324,7 +329,14 @@
            (let [pauseToggleButton (by-id "pauseToggle")]
              (unlisten! pauseToggleButton :click)
              (listen! pauseToggleButton :click #(pauseButtonHandler state %1)))
-           (let [keyDownHandler #(handleKeyDown state %1 startNewGame)]
+           (let [keyDownHandler #(case (getAction %1)
+                                   LEFT (changeDir! state LEFT)
+                                   UP (changeDir! state UP)
+                                   RIGHT (changeDir! state RIGHT)
+                                   DOWN (changeDir! state DOWN)
+                                   :pause (togglePause state)
+                                   :restart (startNewGame state)
+                                   )]
              (unlisten! :keydown)
              (listen! :keydown keyDownHandler)
            ))
