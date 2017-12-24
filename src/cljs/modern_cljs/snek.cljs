@@ -32,6 +32,7 @@
     (-> "length" by-id .-innerHTML (set! (-> state :snake :cells count)))
     (-> "snake" by-id .-innerHTML (set! (-> state :snake :cells first :pos)))
     (-> "direction" by-id .-innerHTML (set! (-> state :snake :cells first :dir)))
+    (-> "nextDir" by-id .-innerHTML (set! (-> state :nextDir)))
     (-> "fruit" by-id .-innerHTML (set! (-> state :fruit :pos)))
     (-> "tick" by-id .-innerHTML (set! (:tickDelay state)))
     (-> "state" by-id .-innerHTML (set! (:gameState state)))
@@ -67,7 +68,9 @@
 (defn clear 
   "clears the canvas represented by the given context"
   [ctx]
-  (do (set! (.-fillStyle ctx) "White") ; set the background color of the field
+  (do 
+    ;(.log js/console "CONTEXT CLEARED")
+    (set! (.-fillStyle ctx) "White") ; set the background color of the field
       (.fillRect ctx 0 0 (-> ctx .-canvas .-clientWidth) (-> ctx .-canvas .-clientHeight))))
 
 (defn getNextPos
@@ -91,7 +94,7 @@
   (let [scaleFactor (-> state :field :scaleFactor )
         cells (-> state :snake :cells)]
     (set! (.-lineWidth ctx) (* (:girth (first cells)) (/ scaleFactor 5)))
-    (loop [i 1]
+    (loop [i 0]
       (when (< i (count cells))
         (let [cell (nth cells i)
               x (* (-> cell :pos :x) scaleFactor)
@@ -106,8 +109,8 @@
                               (:LEFT :RIGHT) (.fillRect ctx x y girth (/ girth 2))
                            )
             (== (mod i 3) 1) (case (:dir cell)
-                              (:UP :DOWN) (.fillRect ctx (+ x (* (girth 0.25))) y (/ girth 2) girth)
-                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (* girth 0.25)) (/ girth 2) girth)
+                              (:UP :DOWN) (.fillRect ctx (+ x (* girth 0.25)) y (/ girth 2) girth)
+                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (* girth 0.25)) girth (/ girth 2))
                            )
             :else (case (:dir cell)
                     (:UP :DOWN) (.fillRect ctx (+ x (/ girth 2)) y (/ girth 2) girth)
@@ -128,6 +131,7 @@
         y (* (-> state :fruit :pos :y) scaleFactor)
 	s (* (-> state :snake :cells first :girth) scaleFactor)]
     (do (set! (.-fillStyle ctx) "Green")
+        ;(.log js/console "x " x " y " y " s " s " scaleFactor" scaleFactor " cells first" (-> state :snake :cells first .toString))
         (.fillRect ctx x y s s))))
 
 
@@ -142,17 +146,19 @@
         newcells
         (recur (rest cells) 
                (-> cells first :dir) 
-               (conj newcells { :pos (wrapPoint 
+               (conj newcells {:pos (wrapPoint 
                                        (getNextPos (:pos (first cells)) (:dir (first cells)))
                                        (-> state :field :width) 
                                        (-> state :field :height))
-                               :dir lastDir }))))))
+                               :dir lastDir
+                               :girth (:girth (first cells))}))))))
 
 
 (defn checkCollision 
   "returns true if cell1 has the same position as cell2, false otherwise"
   [cell1 cell2]
-  (do (.log js/console "cell1" (:x (:pos cell1)) (:y (:pos cell1)) "cell2" (:x (:pos cell2)) (:y (:pos cell2)))
+  (do 
+    ;(.log js/console "cell1" (:x (:pos cell1)) (:y (:pos cell1)) "cell2" (:x (:pos cell2)) (:y (:pos cell2)))
  (and 
      (== (-> cell1 :pos :x) (-> cell2 :pos :x))
      (== (-> cell1 :pos :y) (-> cell2 :pos :y)))))
@@ -212,10 +218,11 @@
   [state]
   (let [headDir (-> state snakeHead :dir)
         nextDir (:nextDir state)]
+    ;(.log js/console "turnSnake called, nextDir: " nextDir " ---  reverse: " (reverseDir nextDir) " ---- headDir: " headDir)
     (if (and 
           (not= headDir nextDir)
           (not= headDir (reverseDir nextDir)))
-      (assoc-in (:snake state) [:snake :cells 0 :dir] nextDir)
+      (assoc-in (:snake state) [:cells 0 :dir] nextDir)
       (:snake state)
             ;moveSnake(state, movementDelta);
     )
@@ -285,7 +292,9 @@
   "returns true if the snake's head is the same cell as the current fruit cell, false otherwise"
   [state]
   (let [head (snakeHead state)]
-       (checkCollision head (:fruit state))))
+    (do 
+      ;(.log js/console "checking if fruit is eaten for" (:x (:pos head)) (:y (:pos head)) " ---  fruit: " (:x (:pos (:fruit state))) (:y (:pos (:fruit state))))
+       (checkCollision head (:fruit state)))))
 
 (defn tick 
   "processes the current game state and mutates the state atom accordingly"
@@ -297,12 +306,12 @@
 
     (if (= (:gameState @state) "RUNNING")
       (do
-        (if (has-eaten-fruit? state)
+        (if (has-eaten-fruit? @state)
           (do (swap! state assoc-in [:fruit :pos] (getNewFruitPos @state))
               (swap! state assoc-in [:snake :cells] (growSnake @state))
               (swap! state assoc :score (+ (:score @state) scoreDelta)) ; increase points
               (swap! state assoc :tickDelay (+ (:tickDelay @state) tickDelta)) ; speed up game a bit
-              (.log js/console "FRUIT EATEN")
+              ;(.log js/console "FRUIT EATEN")
           )
         )
         (swap! state assoc :snake (turnSnake @state))
@@ -322,7 +331,7 @@
                              :tickId (.setTimeout js/window #(tick state)))
         false
     )
-    "RUNNING" (do (reset! state assoc :gameState "PAUSED")
+    "RUNNING" (do (swap! state assoc :gameState "PAUSED")
                 ;clearTimeout(state.tickId);
                 ;state.tickId = null;
         true
@@ -340,8 +349,8 @@
 
 (defn pauseButtonHandler [state e]
         (if (togglePause state)
-          (-> e .target (set-style! :border-style "inset"))
-          (-> e .target (set-style! :border-style "outset"))))
+          (-> e :target (set-style! :border-style "inset"))
+          (-> e :target (set-style! :border-style "outset"))))
 
 (defn getAction [e]
   "returns the action performed based on the keyCode of the given event
@@ -349,7 +358,7 @@
    returns :pause for the pause game action
    returns :restart for the restart game action
   "
-  (do (.log js/console "event" e " and " (.-keyCode e))
+  (do ;(.log js/console "event" e " and " (.-keyCode e))
   (case (:keyCode e)
     (37 72 65) :LEFT  ; (Left h a) keys
     (38 75 87) :UP    ; (Up k w) keys
@@ -361,7 +370,9 @@
 
 (defn changeDir [state dir]
   "returns the state with nextDir set to given direction"
-  (assoc state :nextDir dir)
+  (do 
+    ;(.log js/console "Changing dir to" dir)
+  (assoc state :nextDir dir))
 )
 
 (defn startNewGame! [state] 
@@ -370,7 +381,7 @@
                 (.clearTimeout js/window (:tickId @state))
         ))
         (swap! state getInitialGameState)
-        (.log js/console "state second" @state )
+        (.log js/console "state second" (.toString @state))
 
         (let [ctx (initializeCtx "canvas" (-> @state :field :width) (-> @state :field :height) (-> @state :field :scaleFactor))]
            (clear ctx)
