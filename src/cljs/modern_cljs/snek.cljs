@@ -89,33 +89,38 @@
   (let [scaleFactor (-> state :field :scaleFactor )
         cells (-> state :snake :cells)]
     (set! (.-lineWidth ctx) (* (:girth (first cells)) (/ scaleFactor 5)))
-    (loop [i 0]
-      (when (< i (count cells))
+    (dotimes [i (count cells)]
         (let [cell (nth cells i)
               x (* (-> cell :pos :x) scaleFactor)
               y (* (-> cell :pos :y) scaleFactor)
               girth (* (:girth cell) scaleFactor)]
-          (set! (.-fillStyle ctx) (if (== i 0) "Blue" "Red"))
+          (set! (.-fillStyle ctx) (if (zero? i) "Blue" "Red"))
 
           (cond 
-            (== i 0) (.fillRect ctx x y girth girth)
-            (== (mod i 3) 0) (case (:dir cell)
+            (zero? i) (.fillRect ctx x y girth girth)
+            (== (mod i 6) 0) (case (:dir cell)
                               (:UP :DOWN) (.fillRect ctx x y (/ girth 2) girth)
-                              (:LEFT :RIGHT) (.fillRect ctx x y girth (/ girth 2))
-                           )
-            (== (mod i 3) 1) (case (:dir cell)
+                              (:LEFT :RIGHT) (.fillRect ctx x y girth (/ girth 2)))
+            (== (mod i 6) 1) (case (:dir cell)
                               (:UP :DOWN) (.fillRect ctx (+ x (* girth 0.25)) y (/ girth 2) girth)
-                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (* girth 0.25)) girth (/ girth 2))
-                           )
-            :else (case (:dir cell)
-                    (:UP :DOWN) (.fillRect ctx (+ x (/ girth 2)) y (/ girth 2) girth)
-                    (:LEFT :RIGHT) (.fillRect ctx x (+ y (/ girth 2)) girth (/ girth 2)))
+                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (* girth 0.25)) girth (/ girth 2)))
+            (== (mod i 6) 2) (case (:dir cell)
+                              (:UP :DOWN) (.fillRect ctx (+ x (/ girth 2)) y (/ girth 2) girth)
+                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (/ girth 2)) girth (/ girth 2)))
+            (== (mod i 6) 3) (case (:dir cell)
+                              (:UP :DOWN) (.fillRect ctx (+ x (* girth 0.25)) y (/ girth 2) girth)
+                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (* girth 0.25)) girth (/ girth 2)))
+            (== (mod i 6) 4) (case (:dir cell)
+                              (:UP :DOWN) (.fillRect ctx x y (/ girth 2) girth)
+                              (:LEFT :RIGHT) (.fillRect ctx x y girth (/ girth 2)))
+            (== (mod i 6) 5) (case (:dir cell)
+                              (:UP :DOWN) (.fillRect ctx (+ x (* girth 0.25)) y (/ girth 2) girth)
+                              (:LEFT :RIGHT) (.fillRect ctx x (+ y (* girth 0.25)) girth (/ girth 2)))
           )
 
           (set! (.-strokeStyle ctx) "White")
           (if i (.strokeRect ctx x y girth girth))
-          (recur (inc i))
-        )))))
+        ))))
 
 
 (defn draw-fruit
