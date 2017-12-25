@@ -290,6 +290,7 @@
   (let [head (snake-head state)]
     (if (has-eaten-self? @state)
       (do (swap! state assoc :gameState "GAMEOVER")
+          (.play (new js/Audio "audio/death.wav"))
           (.log js/console "GAMEOVER")))
 
     (if (= (:gameState @state) "RUNNING")
@@ -298,8 +299,9 @@
           (do (swap! state assoc-in [:fruit :pos] (get-new-fruit-pos @state))
               (swap! state assoc-in [:snake :cells] (grow-snake @state))
               (swap! state assoc :score (+ (:score @state) scoreDelta)) ; increase points
-              (swap! state assoc :tickDelay (+ (:tickDelay @state) tickDelta)) ; speed up game a bit
+              (swap! state assoc :tickDelay (- (:tickDelay @state) tickDelta)) ; speed up game a bit
               ;(.log js/console "FRUIT EATEN")
+              (.play (new js/Audio (rand-nth ["audio/crunch1.wav" "audio/crunch2.wav" "audio/crunch3.wav" "audio/crunch4.wav"])))
           )
         )
         (swap! state assoc :snake (turn-snake @state))
