@@ -275,9 +275,9 @@
 	defaultHeight 25
         initialDirection :RIGHT
         initialLength 5]
-    (.log js/console "init-game-state called")
+    #_(.log js/console "init-game-state called")
     {
-      :gameState "RUNNING"
+      :gameState :RUNNING
       :tickDelay 100
       :field {
         :scaleFactor 25
@@ -320,11 +320,11 @@
   [state]
   (let [head (snake-head state)]
     (if (has-eaten-self? @state)
-      (do (swap! state assoc :gameState "GAMEOVER")
+      (do (swap! state assoc :gameState :GAMEOVER)
           (.play (new js/Audio "audio/death.wav"))
-          (.log js/console "GAMEOVER")))
+          #_(.log js/console "GAMEOVER")))
 
-    (if (= (:gameState @state) "RUNNING")
+    (if (= (:gameState @state) :RUNNING)
       (do
         (if (has-eaten-fruit? @state)
           (do (swap! state assoc-in [:fruit :pos] (get-new-fruit-pos @state))
@@ -347,16 +347,17 @@
 (defn toggle-pause [state]
   "toggles the game state between paused and running"
   (case (:gameState @state)
-    "PAUSED" (do (swap! state assoc
-                             :gameState "RUNNING"
+    :PAUSED (do (swap! state assoc
+                             :gameState :RUNNING
                              :tickId (.setTimeout js/window #(tick state)))
         false
     )
-    "RUNNING" (do (swap! state assoc :gameState "PAUSED")
+    :RUNNING (do (swap! state assoc :gameState :PAUSED)
                 (.clearTimeout js/window (:tickId @state))
                 ;state.tickId = null;
         true
     )
+    nil
   )
 )
 
@@ -401,7 +402,7 @@
     (.clearTimeout js/window (:tickId @state)))
 
   (swap! state init-game-state)
-  (.log js/console "state second" (.toString @state))
+  #_(.log js/console "new game state" (.toString @state))
 
   ; initialize the context and run the animation sequence
   (let [ctx (init-ctx "canvas" (-> @state :field :width) (-> @state :field :height) (-> @state :field :scaleFactor))]
@@ -429,7 +430,7 @@
 (defn ^:export init []
   (let [state (atom nil)
         new-game-button (by-id "newGameButton")]
-    (.log js/console "game loaded")
+    #_(.log js/console "game loaded")
     (unlisten! new-game-button :click)
     (listen! new-game-button :click #(start-new-game! state))))
 
