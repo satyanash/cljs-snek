@@ -47,7 +47,7 @@
     :y (.floor js/Math (* (.random js/Math) height))})
 
 (defn wrap
-  "returns a wrapped value within the limit, multiple times if needed"
+  "returns a wrapped value within the `limit`, multiple times if needed"
   [value limit]
   (cond
     (< value 0) (+ value limit)
@@ -55,21 +55,21 @@
     :else value))
 
 (defn wrap-point
-  "returns a wrapped version of the given point based on given dimensions"
+  "returns a wrapped version of the given `point` based on given dimensions"
   [point width height]
   {:x (wrap (get point :x) width)
    :y (wrap (get point :y) height)})
 
 (defn clear-ctx
-  "clears the canvas represented by the given context"
+  "clears the canvas represented by the given `ctx`"
   [ctx]
   (do
-    ;(.log js/console "CONTEXT CLEARED")
+    #_(.log js/console "CONTEXT CLEARED")
     (set! (.-fillStyle ctx) "White") ; set the background color of the field
       (.fillRect ctx 0 0 (-> ctx .-canvas .-clientWidth) (-> ctx .-canvas .-clientHeight))))
 
 (defn get-next-pos
-  "returns the next position on the basis of the given position and direction"
+  "returns the next position on the basis of the given `startPos` and `direction`"
   [startPos direction]
   (case direction
     :UP {:x (get startPos :x)
@@ -84,7 +84,7 @@
 )
 
 (defn draw-snake
-  "draws the snake onto the given canvas context"
+  "draws the snake onto the given canvas `ctx`"
   [ctx state]
   (let [scaleFactor (-> state :field :scaleFactor )
         cells (-> state :snake :cells)]
@@ -162,12 +162,12 @@
         y (* (-> state :fruit :pos :y) scaleFactor)
 	s (* (-> state :snake :cells first :girth) scaleFactor)]
     (do (set! (.-fillStyle ctx) "Green")
-        ;(.log js/console "x " x " y " y " s " s " scaleFactor" scaleFactor " cells first" (-> state :snake :cells first .toString))
+        #_(.log js/console "x " x " y " y " s " s " scaleFactor" scaleFactor " cells first" (-> state :snake :cells first .toString))
         (.fillRect ctx x y s s))))
 
 
 (defn move-snake
-  "returns a vector of cells representing the snake with all cells moved one cell in the corresponding direction"
+  "returns a vector of cells representing the snake with all cells shifted one cell in the corresponding direction"
   [state]
   (let [c (-> state :snake :cells)]
     (loop [cells c
@@ -185,14 +185,14 @@
                                :girth (:girth (first cells))}))))))
 
 
-(defn check-collision
-  "returns true if cell1 has the same position as cell2, false otherwise"
+(defn check-collision?
+  "returns true if `cell1` has the same position as `cell2`, false otherwise"
   [cell1 cell2]
   (do
-    ;(.log js/console "cell1" (:x (:pos cell1)) (:y (:pos cell1)) "cell2" (:x (:pos cell2)) (:y (:pos cell2)))
- (and
-     (== (-> cell1 :pos :x) (-> cell2 :pos :x))
-     (== (-> cell1 :pos :y) (-> cell2 :pos :y)))))
+    #_(.log js/console "cell1" (:x (:pos cell1)) (:y (:pos cell1)) "cell2" (:x (:pos cell2)) (:y (:pos cell2)))
+    (and
+      (== (-> cell1 :pos :x) (-> cell2 :pos :x))
+      (== (-> cell1 :pos :y) (-> cell2 :pos :y)))))
 
 (defn get-new-fruit-pos
   "returns a new position for the fruit"
@@ -200,7 +200,7 @@
   (let [cells (-> state :snake :cells)]
     (loop []
       (let [newpoint (random-point (-> state :field :width) (-> state :field :height))]
-        (if (not-any? #(check-collision %1 newpoint) cells)
+        (if (not-any? #(check-collision? %1 newpoint) cells)
           newpoint
           (recur)
         )
@@ -237,7 +237,7 @@
   [state]
   (let [headDir (-> state snake-head :dir)
         nextDir (:nextDir state)]
-    ;(.log js/console "turn-snake called, nextDir: " nextDir " ---  reverse: " (reverser-dir nextDir) " ---- headDir: " headDir)
+    #_(.log js/console "turn-snake called, nextDir: " nextDir " ---  reverse: " (reverser-dir nextDir) " ---- headDir: " headDir)
     (if (and 
           (not= headDir nextDir)
           (not= headDir (reverser-dir nextDir)))
@@ -303,7 +303,7 @@
         cells (-> state :snake :cells)]
      (loop [i 1]
        (when (< i (count cells))
-       (if (check-collision head (nth cells i))
+       (if (check-collision? head (nth cells i))
          true
          (recur (inc i)))))))
 
@@ -312,8 +312,8 @@
   [state]
   (let [head (snake-head state)]
     (do 
-      ;(.log js/console "checking if fruit is eaten for" (:x (:pos head)) (:y (:pos head)) " ---  fruit: " (:x (:pos (:fruit state))) (:y (:pos (:fruit state))))
-       (check-collision head (:fruit state)))))
+      #_(.log js/console "checking if fruit is eaten for" (:x (:pos head)) (:y (:pos head)) " ---  fruit: " (:x (:pos (:fruit state))) (:y (:pos (:fruit state))))
+      (check-collision? head (:fruit state)))))
 
 (defn tick
   "processes the current game state and mutates the state atom accordingly"
@@ -331,7 +331,7 @@
               (swap! state assoc-in [:snake :cells] (grow-snake @state))
               (swap! state assoc :score (+ (:score @state) scoreDelta)) ; increase points
               (swap! state assoc :tickDelay (- (:tickDelay @state) tickDelta)) ; speed up game a bit
-              ;(.log js/console "FRUIT EATEN")
+              #_(.log js/console "FRUIT EATEN")
               (.play (new js/Audio (rand-nth ["audio/crunch1.wav" "audio/crunch2.wav" "audio/crunch3.wav" "audio/crunch4.wav"])))
           )
         )
@@ -353,7 +353,7 @@
         false
     )
     "RUNNING" (do (swap! state assoc :gameState "PAUSED")
-                (.clearTimeout js/window (:tickId state))
+                (.clearTimeout js/window (:tickId @state))
                 ;state.tickId = null;
         true
     )
@@ -369,70 +369,67 @@
 )
 
 (defn pause-button-handler [state e]
-        (if (toggle-pause state)
-          (-> e :target (set-style! :border-style "inset"))
-          (-> e :target (set-style! :border-style "outset"))))
+  (if (toggle-pause state)
+    (-> e :target (set-style! :border-style "inset"))
+    (-> e :target (set-style! :border-style "outset"))))
 
 (defn get-action [e]
   "returns the action performed based on the keyCode of the given event
-   returns :LEFT, :RIGHT:, :DOWN, :UP for the corresponding keys
-   returns :pause for the pause game action
-   returns :restart for the restart game action
-  "
-  (do ;(.log js/console "event" e " and " (.-keyCode e))
-  (case (:keyCode e)
-    (37 72 65) :LEFT  ; (Left h a) keys
-    (38 75 87) :UP    ; (Up k w) keys
-    (39 76 68) :RIGHT ; (Right l d) keys
-    (40 74 83) :DOWN  ; (Down j s) keys
-    80 :pause ; p key
-    82 :restart ; r key
-    nil))) 
+   returns `:LEFT`, `:RIGHT`, `:DOWN`, `:UP` for the corresponding keys
+   returns `:pause` for the pause game action
+   returns `:restart` for the restart game action"
+  (do #_(.log js/console "event" e " and " (.-keyCode e))
+    (case (:keyCode e)
+      (37 72 65) :LEFT  ; (Left h a) keys
+      (38 75 87) :UP    ; (Up k w) keys
+      (39 76 68) :RIGHT ; (Right l d) keys
+      (40 74 83) :DOWN  ; (Down j s) keys
+      80 :pause ; p key
+      82 :restart ; r key
+      nil)))
 
 (defn change-dir [state dir]
   "returns the state with nextDir set to given direction"
   (do 
-    ;(.log js/console "Changing dir to" dir)
-  (assoc state :nextDir dir))
+    #_(.log js/console "Changing dir to" dir)
+    (assoc state :nextDir dir))
 )
 
 (defn start-new-game! [state]
-        (if @state (do
-                (.cancelAnimationFrame js/window (:animationId @state))
-                (.clearTimeout js/window (:tickId @state))
-        ))
-        (swap! state init-game-state)
-        (.log js/console "state second" (.toString @state))
+  (when @state
+    (.cancelAnimationFrame js/window (:animationId @state))
+    (.clearTimeout js/window (:tickId @state)))
 
-        (let [ctx (init-ctx "canvas" (-> @state :field :width) (-> @state :field :height) (-> @state :field :scaleFactor))]
-           (clear-ctx ctx)
-           (do (swap! state assoc :animationId (.requestAnimationFrame js/window #(draw-frame ctx state))) ;run the animation sequence
-                (swap! state assoc :tickId (.setTimeout js/window #(tick state))) ;start the ticker
-           )
+  (swap! state init-game-state)
+  (.log js/console "state second" (.toString @state))
 
-        (when (and js/document (.-getElementById js/document))
-           (let [pauseToggleButton (by-id "pauseToggle")]
-             (unlisten! pauseToggleButton :click)
-             (listen! pauseToggleButton :click #(pause-button-handler state %1)))
-           (let [keyDownHandler #(case (get-action %1)
-                                   :LEFT (swap! state change-dir :LEFT)
-                                   :UP (swap! state change-dir :UP)
-                                   :RIGHT (swap! state change-dir :RIGHT)
-                                   :DOWN (swap! state change-dir :DOWN)
-                                   :pause (toggle-pause state)
-                                   :restart (start-new-game! state)
-                                   nil 
-                                   )]
-             (unlisten! :keydown)
-             (listen! :keydown keyDownHandler)
-           ))
-        )
-)
+  ; initialize the context and run the animation sequence
+  (let [ctx (init-ctx "canvas" (-> @state :field :width) (-> @state :field :height) (-> @state :field :scaleFactor))]
+    (clear-ctx ctx)
+    (swap! state assoc :animationId (.requestAnimationFrame js/window #(draw-frame ctx state))))
+
+  ; start the ticker
+  (swap! state assoc :tickId (.setTimeout js/window #(tick state)))
+
+  (when (and js/document (.-getElementById js/document))
+    (let [pause-toggle-button (by-id "pauseToggle")]
+      (unlisten! pause-toggle-button :click)
+      (listen! pause-toggle-button :click #(pause-button-handler state %1)))
+    (let [key-down-handler #(case (get-action %1)
+                             :LEFT (swap! state change-dir :LEFT)
+                             :UP (swap! state change-dir :UP)
+                             :RIGHT (swap! state change-dir :RIGHT)
+                             :DOWN (swap! state change-dir :DOWN)
+                             :pause (toggle-pause state)
+                             :restart (start-new-game! state)
+                             nil)]
+      (unlisten! :keydown)
+      (listen! :keydown key-down-handler))))
 
 (defn ^:export init []
   (let [state (atom nil)
-        newGameButton (by-id "newGameButton")]
+        new-game-button (by-id "newGameButton")]
     (.log js/console "game loaded")
-    (unlisten! newGameButton :click)
-    (listen! newGameButton :click #(start-new-game! state))))
+    (unlisten! new-game-button :click)
+    (listen! new-game-button :click #(start-new-game! state))))
 
