@@ -353,6 +353,7 @@
         false
     )
     :RUNNING (do (swap! state assoc :gameState :PAUSED)
+                (.log js/console "PAUSING BY CLEARING NEXT TICK" (:tickId @state))
                 (.clearTimeout js/window (:tickId @state))
                 ;state.tickId = null;
         true
@@ -416,14 +417,15 @@
     (let [pause-toggle-button (by-id "pauseToggle")]
       (unlisten! pause-toggle-button :click)
       (listen! pause-toggle-button :click #(pause-button-handler state %1)))
-    (let [key-down-handler #(case (get-action %1)
-                             :LEFT (swap! state change-dir :LEFT)
-                             :UP (swap! state change-dir :UP)
-                             :RIGHT (swap! state change-dir :RIGHT)
-                             :DOWN (swap! state change-dir :DOWN)
-                             :pause (toggle-pause state)
-                             :restart (start-new-game! state)
-                             nil)]
+    (letfn [(key-down-handler [e]
+              (case (get-action e)
+                :LEFT (swap! state change-dir :LEFT)
+                :UP (swap! state change-dir :UP)
+                :RIGHT (swap! state change-dir :RIGHT)
+                :DOWN (swap! state change-dir :DOWN)
+                :pause (toggle-pause state)
+                :restart (start-new-game! state)
+                nil))]
       (unlisten! :keydown)
       (listen! :keydown key-down-handler))))
 
